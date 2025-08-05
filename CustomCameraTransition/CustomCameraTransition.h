@@ -38,11 +38,16 @@ class CustomCameraTransition: public BakkesMod::Plugin::BakkesModPlugin
 
 	float remainingTime = 0.5f;
 
+	bool overrideTransition = false;
+	int transitionCount = 0;
+
 	//Boilerplate
 	void onLoad() override;
 	//void onUnload() override; // Uncomment and implement if you need a unload method
 
 	void OnCameraBlenderTransition(const CameraStateBlenderWrapper& blender);
+	void SetNextTransition(std::vector<std::string> args);
+	ViewTargetBlendFunction StringToBlendFunction(const std::string& str);
 
 public:
 	void RenderSettings() override; // Uncomment if you wanna render your own tab in the settings menu
