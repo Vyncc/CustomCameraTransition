@@ -11,7 +11,8 @@ void CustomCameraTransition::onLoad()
 {
 	_globalCvarManager = cvarManager;
 
-	cvarManager->registerNotifier("SetNextCamTransition", std::bind(&CustomCameraTransition::SetNextTransition, this, std::placeholders::_1), "It will set the next camera transition to custom values. Usage: SetNextCamTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, Ease Out, Ease In Out, Midway Step)> <Blend Exp> <Lock Outgoing (true or false)>", 0);
+	cvarManager->registerNotifier("SetCameraTransition", std::bind(&CustomCameraTransition::SetNextTransition, this, std::placeholders::_1), "Set the camera transition to custom values. Usage: SetCameraTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, EaseOut, EaseInOut, MidwayStep)> <Blend Exp> <Lock Outgoing (true or false)>", 0);
+	cvarManager->registerNotifier("ResetCameraTransition", std::bind(&CustomCameraTransition::ResetCameraTransition, this, std::placeholders::_1), "Reset camera transition values", 0);
 
     gameWrapper->HookEventWithCallerPost<ActorWrapper>(
         "Function ProjectX.CameraStateBlender_X.TransitionToState",
@@ -22,10 +23,10 @@ void CustomCameraTransition::onLoad()
 
 void CustomCameraTransition::OnCameraBlenderTransition(const CameraStateBlenderWrapper& blender)
 {
+    //LOG("transition");
+
     if (overrideTransition)
     {
-        transitionCount++;
-
         auto transition = blender.GetTransition();
         transition.blend_params.blend_time = blendTime;
         transition.blend_params.blend_exp = blendExp;
@@ -35,21 +36,15 @@ void CustomCameraTransition::OnCameraBlenderTransition(const CameraStateBlenderW
         blender.SetTransition(transition);
 
         //LOG("override transition");
-
-        if (transitionCount == 2)
-        {
-            overrideTransition = false;
-            transitionCount = 0;
-        }
     }
 }
 
-//SetNextCamTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, Ease Out, Ease In Out, Midway Step)> <Blend Exp> <Lock Outgoing (true or false)>
+//SetCameraTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, EaseOut, EaseInOut, MidwayStep)> <Blend Exp> <Lock Outgoing (true or false)>
 void CustomCameraTransition::SetNextTransition(std::vector<std::string> args)
 {
     if (args.size() < 6)
     {
-        cvarManager->log("Not enough arguments provided. Usage: SetNextCamTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, Ease Out, Ease In Out, Midway Step)> <Blend Exp> <Lock Outgoing (true or false)>");
+        LOG("[ERROR]Not enough arguments provided. Usage: SetCameraTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, EaseOut, EaseInOut, MidwayStep)> <Blend Exp> <Lock Outgoing (true or false)>");
         return;
     }
 
@@ -60,17 +55,38 @@ void CustomCameraTransition::SetNextTransition(std::vector<std::string> args)
     lockOutgoing = (args[5] == "true");
 
     overrideTransition = true;
-    transitionCount = 0;
 }
 
 ViewTargetBlendFunction CustomCameraTransition::StringToBlendFunction(const std::string& str)
 {
-	for (const auto& [value, name] : blendFunctionMap)
+	if (str == "Linear")
+		return ViewTargetBlendFunction::VTBlend_Linear;
+    else if (str == "Cubic")
+		return ViewTargetBlendFunction::VTBlend_Cubic;
+    else if (str == "EaseIn")
+		return ViewTargetBlendFunction::VTBlend_EaseIn;
+    else if (str == "EaseOut")
+		return ViewTargetBlendFunction::VTBlend_EaseOut;
+    else if (str == "EaseInOut")
+		return ViewTargetBlendFunction::VTBlend_EaseInOut;
+    else if (str == "MidwayStep")
+		return ViewTargetBlendFunction::VTBlend_MidwayStep;
+    else
     {
-		if (name == str)
-            return value;
-	}
+        LOG("[ERROR]Couldn't find blend function: {}, using default: Linear", str);
+        return ViewTargetBlendFunction::VTBlend_Linear;
+    }
+}
 
-	LOG("[ERROR]Couldn't find blend function: {}, using default Linear", str);
-	return ViewTargetBlendFunction::VTBlend_Linear;
+void CustomCameraTransition::ResetCameraTransition(std::vector<std::string> args)
+{
+	blendTime = 0.f;
+	remainingTime = 0.f;
+	blendFunction = ViewTargetBlendFunction::VTBlend_Linear;
+	blendExp = 2.f;
+	lockOutgoing = false;
+
+	overrideTransition = false;
+
+	LOG("Camera transition values reset to default");
 }

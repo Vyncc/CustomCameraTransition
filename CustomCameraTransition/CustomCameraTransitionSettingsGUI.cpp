@@ -26,10 +26,21 @@ void CustomCameraTransition::RenderSettings()
 
 	ImGui::Separator();*/
 
-	ImGui::Text("Command usage: SetNextCamTransition <Blend Time> <Remaining Time> <Blend Function (Values: Linear, Cubic, Ease In, Ease Out, Ease In Out, Midway Step)> <Blend Exp> <Lock Outgoing (true or false)>");
+	ImGui::Text("Set the camera transition to custom values.");
+	ImGui::Text("Usage: SetNextCamTransition <Blend Time> <Remaining Time> <Blend Function (Linear, Cubic, Ease In, EaseOut, EaseInOut, MidwayStep)> <Blend Exp> <Lock Outgoing (true or false)>");
 	ImGui::Text("Example:");
 	ImGui::SameLine();
-	static std::string exampleCommand = "SetNextCamTransition 1.000 1.000 \"Ease In Out\" 2.000 true";
-	ImGui::SetNextItemWidth(450.f);
+	static std::string exampleCommand = "SetCameraTransition 1.000 1.000 EaseInOut 2.000 true";
+	ImGui::SetNextItemWidth(330.f);
 	ImGui::InputText("##ExampleCommand", &exampleCommand, ImGuiInputTextFlags_ReadOnly);
+
+	ImGui::NewLine();
+
+	ImGui::Text("Use the command");
+	ImGui::SameLine();
+	static std::string resetCameraTransitionCommand = "ResetCameraTransition";
+	ImGui::SetNextItemWidth(140.f);
+	ImGui::InputText("##ResetCameraTransitionCommand", &resetCameraTransitionCommand, ImGuiInputTextFlags_ReadOnly);
+	ImGui::SameLine();
+	ImGui::Text("when you're done with the camera transition you wanted to override");
 }
